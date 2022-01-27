@@ -24,14 +24,14 @@ namespace TesteBackendEnContact.Repository
         public async Task<ICompany> SaveAsync(ICompany company)
         {
             using var connection = new SqliteConnection(databaseConfig.ConnectionString);
-            var dao = new CompanyDao(company);
+            var dao = new Company(company.Id, company.ContactBookId, company.Name);
 
             if (dao.Id == 0)
                 dao.Id = await connection.InsertAsync(dao);
             else
                 await connection.UpdateAsync(dao);
 
-            return dao.Export();
+            return dao;
         }
 
         public async Task DeleteAsync(int id)
@@ -40,8 +40,8 @@ namespace TesteBackendEnContact.Repository
             using var transaction = connection.BeginTransaction();
 
             var sql = new StringBuilder();
-            sql.AppendLine("DELETE FROM Company WHERE Id = @id;");
-            sql.AppendLine("UPDATE Contact SET CompanyId = null WHERE CompanyId = @id;");
+            sql.AppendLine($"DELETE FROM Company WHERE Id = {id};");
+            sql.AppendLine($"UPDATE Contact SET CompanyId = null WHERE CompanyId = {id};");
 
             await connection.ExecuteAsync(sql.ToString(), new { id }, transaction);
         }
@@ -51,41 +51,32 @@ namespace TesteBackendEnContact.Repository
             using var connection = new SqliteConnection(databaseConfig.ConnectionString);
 
             var query = "SELECT * FROM Company";
-            var result = await connection.QueryAsync<CompanyDao>(query);
+            var result = await connection.QueryAsync<Company>(query);
 
-            return result?.Select(item => item.Export());
+            return result?.Select(item => item);
         }
 
         public async Task<ICompany> GetAsync(int id)
         {
             using var connection = new SqliteConnection(databaseConfig.ConnectionString);
 
-            var query = "SELECT * FROM Conpany where Id = @id";
-            var result = await connection.QuerySingleOrDefaultAsync<CompanyDao>(query, new { id });
+            var query = $"SELECT * FROM Company where Id = {id}";
+            var result = await connection.QuerySingleOrDefaultAsync<Company>(query, new { id });
 
-            return result?.Export();
+            return result;
         }
-    }
 
-    [Table("Company")]
-    public class CompanyDao : ICompany
-    {
-        [Key]
-        public int Id { get; set; }
-        public int ContactBookId { get; set; }
-        public string Name { get; set; }
-
-        public CompanyDao()
+        public async Task UpdateContactBookAsync(int id, int idContactBook)
         {
-        }
+            using var connection = new SqliteConnection(databaseConfig.ConnectionString);
+            using var transaction = connection.BeginTransaction();
 
-        public CompanyDao(ICompany company)
-        {
-            Id = company.Id;
-            ContactBookId = company.ContactBookId;
-            Name = company.Name;
-        }
+            var sql = new StringBuilder();
+            sql.AppendLine($"UPDATE Company ");
+            sql.AppendLine($"SET ContactBookId = {idContactBook}");
+            sql.AppendLine($"WHERE Id = {id};");
 
-        public ICompany Export() => new Company(Id, ContactBookId, Name);
-    }
+            await connection.ExecuteAsync(sql.ToString(), new { id }, transaction);
+        }
+    }    
 }

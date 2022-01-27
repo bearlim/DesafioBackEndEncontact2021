@@ -9,7 +9,7 @@ using TesteBackendEnContact.Repository.Interface;
 namespace TesteBackendEnContact.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class CompanyController : ControllerBase
     {
         private readonly ILogger<CompanyController> _logger;
@@ -21,7 +21,7 @@ namespace TesteBackendEnContact.Controllers
 
         [HttpPost]
         public async Task<ActionResult<ICompany>> Post(SaveCompanyRequest company, [FromServices] ICompanyRepository companyRepository)
-        {
+        {            
             return Ok(await companyRepository.SaveAsync(company.ToCompany()));
         }
 
@@ -42,5 +42,13 @@ namespace TesteBackendEnContact.Controllers
         {
             return await companyRepository.GetAsync(id);
         }
+
+        //[HttpPatch("{id}/{idContactBook}")]
+        //public async Task<ActionResult<ICompany>> SetContactBook([FromRoute] int id,
+        //    [FromRoute] int idContactBook, [FromServices] ICompanyRepository companyRepository)
+        //{
+        //    c
+        //}
+
     }
 }
